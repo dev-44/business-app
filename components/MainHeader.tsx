@@ -14,7 +14,7 @@ const StyledHeader = styled.header`
 `;
 
 // Estilos para el enlace
-const StyledLink = styled(Link)`
+const StyledLogo = styled.h1`
   font-family: 'Inter', sans-serif;
   display: flex;
   font-weight: 500;
@@ -59,9 +59,9 @@ const MainHeader = () => {
 
   return (
     <StyledHeader>
-      <StyledLink href="/">
+      <StyledLogo>
         New Company
-      </StyledLink>
+      </StyledLogo>
       <Badge className={classNames({ progress: isSuccess === false && isError == false, success: isSuccess === true, error: isError === true })}>{badgeText}</Badge>
     </StyledHeader>
   );
