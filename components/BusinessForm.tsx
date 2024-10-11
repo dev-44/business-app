@@ -29,19 +29,28 @@ interface FormState {
   };
 }
 
+type savedFormDataType = {
+  name: string;
+  type: string;
+  address: {
+    line1: string;
+    line2: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+};
+
 //Estado Inicial del Formulario
-const formInitialState = { 
-  business: { value: '', isValid: undefined },
+const formInitialState: FormState = { 
+  businessName: { value: '', isValid: undefined },
   type: { value: '', isValid: undefined },
-  address: { value: '', isValid: undefined },
-  address2: { value: '', isValid: true, optional: true},
+  line1: { value: '', isValid: undefined },
+  line2: { value: '', isValid: true, optional: true},
   city: { value: '', isValid: undefined },
   state: { value: '', isValid: undefined },
   zip: { value: '', isValid: undefined },
 };
-
-// Se intenta recuperar los datos desde localStorage
-const savedFormData = localStorage.getItem('formData') || null;
 
 export default function BusinessForm() {
 
@@ -50,20 +59,28 @@ export default function BusinessForm() {
 
   const isFirstRender = useRef(true);
 
-  const [initialState, setInitialState] = useState<boolean>((savedFormData ? false : true));
+  const [initialState, setInitialState] = useState<boolean>((true));
 
-  const [form, setForm] = useState<FormState>(() => {
-    return savedFormData ? JSON.parse(savedFormData) : formInitialState
-  });
+  const [form, setForm] = useState<FormState>(formInitialState);
 
-  const {business, type, address, address2, city, state, zip} = form
+  const {businessName, type, line1, line2, city, state, zip} = form
 
   // Recuperar los datos del formulario desde localStorage cuando el componente se monta
   useEffect(() => {
     dispatch(clearState());
     const storedData = localStorage.getItem('formData') || null;
     if (storedData) {
-      setForm(JSON.parse(storedData));
+      setInitialState(false);
+      const formattedData: savedFormDataType = JSON.parse(storedData);
+      setForm({
+        businessName: {value: formattedData.name, isValid: undefined},
+        type: {value: formattedData.type, isValid: undefined},
+        line1: {value: formattedData.address.line1, isValid: undefined},
+        line2: {value: formattedData.address.line2, isValid: undefined, optional: true},
+        city: {value: formattedData.address.city, isValid: undefined},
+        state: {value: formattedData.address.state, isValid: undefined},
+        zip: {value: formattedData.address.zip, isValid: undefined},
+      })
     }
 
     const storedStep = localStorage.getItem('currentStep') || null;
@@ -78,8 +95,18 @@ export default function BusinessForm() {
   // Guardar los datos del formulario en localStorage cada vez que cambian
   useEffect(() => {
     if (isFirstRender.current) return;
-    const copyForm = { ...form };
-    localStorage.setItem('formData', JSON.stringify(copyForm));
+    const businessData: BusinnesDataType = {
+      name: businessName.value,
+      type: type.value,
+      address: {
+        line1: line1.value,
+        line2: line2.value,
+        city: city.value,
+        state: state.value,
+        zip: zip.value
+      }
+    };
+    localStorage.setItem('formData', JSON.stringify(businessData));
   }, [form]);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -88,18 +115,15 @@ export default function BusinessForm() {
     const { name, value } = e.target;
 
     // Se Actualiza el estado del formulario dinámicamente
-    if (form[name].value !== value) {
       // Se verifica si el campo del Input está vacío o no se ha seleccionado una opcion valida en el Select
       const isValid = value.trim() !== '';
       setForm((prevForm) => ({
         ...prevForm,
         [name]: {
-          ...prevForm[name],
           value: value,
           isValid: isValid,
         },
       }));
-    } 
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -134,11 +158,11 @@ export default function BusinessForm() {
     if (!isFormValid) return;
     
     const businessData: BusinnesDataType = {
-      name: business.value,
+      name: businessName.value,
       type: type.value,
       address: {
-        line1: address.value,
-        line2: address2.value,
+        line1: line1.value,
+        line2: line2.value,
         city: city.value,
         state: state.value,
         zip: zip.value
@@ -153,18 +177,18 @@ export default function BusinessForm() {
 
   return (
     <StyledForm onSubmit={handleSubmit}>
-      <Label htmlFor="business">Business name</Label>
+      <Label htmlFor="name">Business name</Label>
       <InputContainer>
         <Input 
-          id="business"
-          name="business"
+          id="businessName"
+          name="businessName"
           type="text" 
           placeholder="Registered business name" 
-          value={business.value} 
+          value={businessName.value} 
           onChange={handleOnChange} 
-          className={classNames({ error: business.isValid === false })}
+          className={classNames({ error: businessName.isValid === false })}
         />
-        {business.isValid === false && (
+        {businessName.isValid === false && (
           <ErrorMessage>
             <Image src="/assets/Union.png" alt="Error icon" width={20} height={20} />
             Please enter a business name
@@ -192,18 +216,18 @@ export default function BusinessForm() {
         )}
       </InputContainer>
 
-      <Label htmlFor="address">Address</Label>
+      <Label htmlFor="line1">Address</Label>
       <InputContainer>
         <Input 
-          id="address" 
-          name="address"
+          id="line1" 
+          name="line1"
           type="text" 
           placeholder="Address line 1" 
-          value={address.value}
+          value={line1.value}
           onChange={handleOnChange}
-          className={classNames({ error: address.isValid === false })}
+          className={classNames({ error: line1.isValid === false })}
         />
-        {address.isValid === false && (
+        {line1.isValid === false && (
           <ErrorMessage>
             <Image src="/assets/Union.png" alt="Error icon" width={20} height={20} />
             Please enter an address
@@ -212,11 +236,11 @@ export default function BusinessForm() {
       </InputContainer>
 
       <Input 
-        id="address2" 
-        name="address2" 
+        id="line2" 
+        name="line2" 
         type="text" 
         placeholder="Address line 2 (optional)" 
-        value={address2.value}
+        value={line2.value}
         onChange={handleOnChange} 
       />
 

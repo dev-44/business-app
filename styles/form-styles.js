@@ -96,9 +96,10 @@ export const SubmitButton = styled.button`
   background-color: #ccc;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
+
   &.active {
     background-color: #4A5AFF;
+    cursor: pointer;
   }
 
   @media (max-width: 768px) {

@@ -4,14 +4,11 @@ import styled from 'styled-components';
 import { usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/store/store";
+import { setSteps } from '@/store/form/slice';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
-
-const menuItems = [
-  { name: "Business structure", href: "/", step: "businessForm" },
-  { name: "Contact person", href: "/contactPerson", step: "contactForm" },
-  { name: "Review & submit", href: "/review", step: "review" }
-];
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 const SideBarContainer = styled.aside`
   display: flex;
@@ -106,10 +103,33 @@ const MenuItemText = styled.span`
   }
 `;
 
+const menuItems = [
+  { name: "Business structure", href: "/", step: "businessForm" },
+  { name: "Contact person", href: "/contactPerson", step: "contactForm" },
+  { name: "Review & submit", href: "/review", step: "review" }
+];
+
 const SideBarMenu = () => {
+  const dispatch = useDispatch();
   const pathname = usePathname()
 
   const { steps } = useSelector((state: RootState) => state.form)
+
+  useEffect(() => {
+    const storedStep = localStorage.getItem('currentStep');
+    if(storedStep && storedStep !== '1') {
+      switch (storedStep) {
+        case '2':
+          dispatch(setSteps('businessForm'));
+          break;
+        case '3':
+          dispatch(setSteps('contactForm'));
+          break;
+        default:
+          break;
+      }
+    }
+  },[])
 
   return (
     <SideBarContainer>

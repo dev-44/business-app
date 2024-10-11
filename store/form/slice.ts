@@ -23,6 +23,7 @@ type ContactDataType = {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string;
 };
 
 type StepsType = "businessForm" | "contactForm" | "review";
@@ -38,7 +39,6 @@ type FormDataType = {
     zip: string;
   };
   contact: ContactDataType;
-  phone?: string;
   isLoading?: boolean;
   isSuccess?: boolean;
   successMessage?: string;
@@ -69,41 +69,30 @@ type ResponseType = {
   message: string;
 };
 
-// Recuperacion de estados en localStorage
-const businessData = localStorage.getItem("formData") || null;
-const storedBusinessData = businessData ? JSON.parse(businessData) : null;
-
-const contactData = localStorage.getItem("contactFormData") || null;
-const storedContactData = contactData ? JSON.parse(contactData) : null;
-
-const currentStep = localStorage.getItem("currentStep");
-const storedStep = currentStep ? JSON.parse(currentStep) : null;
-
 const initialState: FormDataType = {
-  name: storedBusinessData?.business?.value || "",
-  type: storedBusinessData?.type?.value || "",
+  name: "",
+  type: "",
   address: {
-    line1: storedBusinessData?.address?.value || "",
-    line2: storedBusinessData?.address2?.value || "",
-    city: storedBusinessData?.city?.value || "",
-    state: storedBusinessData?.state?.value || "",
-    zip: storedBusinessData?.zip?.value || "",
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    zip: "",
   },
   contact: {
-    firstName: storedContactData?.firstName?.value || "",
-    lastName: storedContactData?.lastName?.value || "",
-    email: storedContactData?.email?.value || "",
+    firstName: "",
+    lastName: "",
+    email: "",
   },
-  phone: storedContactData?.phone?.value || "",
   isLoading: false,
   isSuccess: false,
   successMessage: "",
   isError: false,
   errorMessage: "",
   steps: {
-    businessForm: storedStep && storedStep > 1 ? true : false,
-    contactForm: storedStep && storedStep > 2 ? true : false,
-    review: storedStep && storedStep > 3 ? true : false,
+    businessForm: false,
+    contactForm: false,
+    review: false,
   },
 };
 
@@ -152,20 +141,36 @@ export const formSlice = createSlice({
         contact: action.payload,
       };
     },
-    setPhoneData: (state: FormDataType, action: PayloadAction<string>) => {
-      return {
-        ...state,
-        phone: action.payload,
-      };
-    },
     setSteps: (state: FormDataType, action: PayloadAction<StepsType>) => {
-      return {
-        ...state,
-        steps: {
-          ...state.steps,
-          [action.payload]: true,
-        },
-      };
+      switch (action.payload) {
+        case "businessForm":
+          return {
+            ...state,
+            steps: {
+              businessForm: true,
+              contactForm: false,
+              review: false,
+            },
+          };
+        case "contactForm":
+          return {
+            ...state,
+            steps: {
+              businessForm: true,
+              contactForm: true,
+              review: false,
+            },
+          };
+        case "review":
+          return {
+            ...state,
+            steps: {
+              businessForm: true,
+              contactForm: true,
+              review: true,
+            },
+          };
+      }
     },
     editBusinessForm: (state: FormDataType) => {
       return {
@@ -214,7 +219,6 @@ export const formSlice = createSlice({
 export const {
   setBusinessData,
   setContactData,
-  setPhoneData,
   clearState,
   setSteps,
   editBusinessForm,

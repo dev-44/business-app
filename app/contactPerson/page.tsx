@@ -14,28 +14,10 @@ import {
   SubmitButton
 } from '@/styles/form-styles';
 import phones from '@/data/phones';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setContactData, ContactDataType, setPhoneData, setSteps } from "@/store/form/slice"
+import { setContactData, ContactDataType, setSteps } from "@/store/form/slice"
 import { ArrowRightIcon } from 'lucide-react';
-
-// Tipado para el formulario
-interface FormState {
-  [key: string]: { 
-    value: string; 
-    isValid: boolean | undefined;
-    optional?: boolean;
-  };
-}
-
-//Estado Inicial del Formulario
-const formInitialState = { 
-  firstName: { value: '', isValid: undefined },
-  lastName: { value: '', isValid: undefined },
-  email: { value: '', isValid: undefined },
-  country: {value: phones[0].name, isValid: true},
-  phone: { value: '', isValid: undefined},
-};
 
 // Estilos utilizados en este formulario
 const PhoneInputContainer = styled.div`
@@ -103,19 +85,42 @@ const PhoneInput = styled.input`
   }
 `;
 
-// Se intenta recuperar los datos desde localStorage
-const savedFormData = localStorage.getItem('contactFormData');
+// Tipado para el formulario
+interface FormState {
+  [key: string]: { 
+    value: string; 
+    isValid: boolean | undefined;
+    optional?: boolean;
+  };
+}
+
+//Estado Inicial del Formulario
+const formInitialState: FormState = { 
+  firstName: { value: '', isValid: undefined },
+  lastName: { value: '', isValid: undefined },
+  email: { value: '', isValid: undefined },
+  country: {value: phones[0].name, isValid: true},
+  phone: { value: '', isValid: undefined},
+};
+
+type savedFormDataType = {
+  contact: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+};
 
 const ContactPerson = () => {
 
   const router = useRouter();
   const dispatch = useDispatch();
+  const isFirstRender = useRef(true);
 
-  const [initialState, setInitialState] = useState<boolean>(savedFormData ? false : true);
+  const [initialState, setInitialState] = useState<boolean>(true);
 
-  const [form, setForm] = useState<FormState>(() => {
-    return savedFormData ? JSON.parse(savedFormData) : formInitialState
-  });
+  const [form, setForm] = useState<FormState>(formInitialState);
 
   const [selectedCountry, setSelectedCountry] = useState(phones[0]);
 
@@ -125,14 +130,32 @@ const ContactPerson = () => {
   useEffect(() => {
     const storedData = localStorage.getItem('contactFormData');
     if (storedData) {
-      setForm(JSON.parse(storedData));
+      setInitialState(false);
+      const formattedData: savedFormDataType = JSON.parse(storedData);
+      setForm({
+        firstName: {value: formattedData.contact.firstName, isValid: undefined},
+        lastName: {value: formattedData.contact.lastName, isValid: undefined},
+        email: {value: formattedData.contact.email, isValid: undefined},
+        phone: {value: formattedData.contact.phone.replace(/^\+\d+\s*/, ''), isValid: undefined},
+      });
+    }
+    return () => {
+      isFirstRender.current = false;
     }
   }, []);
 
   // Se guardar los datos del formulario en localStorage cada vez que cambian
   useEffect(() => {
-    const copyForm = { ...form };
-    localStorage.setItem('contactFormData', JSON.stringify(copyForm));
+    if (isFirstRender.current) return;
+    const contactData: savedFormDataType = {
+      contact: {
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: email.value,
+        phone : selectedCountry.phone_code + ' ' + phone.value,
+      },
+    };
+    localStorage.setItem('contactFormData', JSON.stringify(contactData));
   }, [form]);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -208,10 +231,11 @@ const ContactPerson = () => {
       firstName: firstName.value,
       lastName: lastName.value,
       email: email.value,
+      phone : selectedCountry.phone_code + ' ' + phone.value,
     };
 
     dispatch(setContactData(contactData));
-    dispatch(setPhoneData(selectedCountry.phone_code + ' ' + phone.value));
+    // dispatch(setPhoneData(selectedCountry.phone_code + ' ' + phone.value));
     dispatch(setSteps('contactForm'));
     localStorage.setItem('currentStep', JSON.stringify(3));
     router.push('/review');

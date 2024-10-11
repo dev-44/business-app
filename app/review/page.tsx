@@ -5,7 +5,7 @@ import { RootState, AppDispatch } from "@/store/store"
 import styled from "styled-components";
 import { useRouter } from 'next/navigation';
 import { submitForm, DataToSendType, setSteps, editBusinessForm, editContactForm } from "@/store/form/slice"
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader } from 'lucide-react';
 
 const StyledForm = styled.form`
@@ -136,17 +136,69 @@ const ErrorMessage = styled.span`
   background-color: #EF444414;
 `;
 
+//Estado Inicial del Formulario
+type BusinessDataType = {
+  name: string;
+  type: string;
+  address: {
+    line1: string;
+    line2: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+};
+
+type ContactDataType = {
+  contact: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+}
+
+const businessDataInitialState = { 
+  name: '',
+  type: '',
+  address: {
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    zip: '',
+  },
+};
+
+const contactDataInitialState = { 
+  contact: {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  }
+
+};
+
+// Se intenta recuperar los datos desde localStorage
+// const savedBusinessData = localStorage.getItem('formData');
+// const savedContactData = localStorage.getItem('contactFormData');
+
 const ReviewPage = () => {
+
+  const [businessData, setBusinessData] = useState<BusinessDataType>(businessDataInitialState);
+
+  const [contactData, setContactData] = useState<ContactDataType>(contactDataInitialState);
+
+  const {name, type, address} = businessData || {}
+  const {line1, line2, city, state, zip} = address || {}
+  const { contact } = contactData || {};
+  const { firstName, lastName, email, phone} = contact || {};
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  const { 
-    name, 
-    type, 
-    address, 
-    contact, 
-    phone, 
+  const {  
     isSuccess, 
     isError, 
     successMessage,
@@ -154,8 +206,37 @@ const ReviewPage = () => {
     isLoading
   } = useSelector((state: RootState) => state.form)
 
-  const {line1, line2, city, state, zip} = address;
-  const { firstName, lastName, email} = contact;
+  useEffect(() => {
+    const storedBusinessData = localStorage.getItem('formData') || null;
+    if (storedBusinessData) {
+      const formattedBusinessData: BusinessDataType = JSON.parse(storedBusinessData);
+      setBusinessData({
+        name: formattedBusinessData.name,
+        type: formattedBusinessData.type,
+        address: {
+          line1: formattedBusinessData.address.line1,
+          line2: formattedBusinessData.address.line2,
+          city: formattedBusinessData.address.city,
+          state: formattedBusinessData.address.state,
+          zip: formattedBusinessData.address.zip,
+        }
+      });
+    }
+
+    const storedContactData = localStorage.getItem('contactFormData');
+    if (storedContactData) {
+      const formattedContactData: ContactDataType = JSON.parse(storedContactData);
+      const { contact } = formattedContactData
+      setContactData({
+        contact: {
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+        }
+      });
+    }
+  },[])
 
   useEffect(() => {
     if (isSuccess) {
@@ -170,7 +251,7 @@ const ReviewPage = () => {
       name,
       type,
       address,
-      contact
+      contact,
     };
 
     dispatch(submitForm(formData))
